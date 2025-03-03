@@ -1,0 +1,264 @@
+---
+title: "Data Science for Public Policy"
+subtitle: "Assignment 04"
+author: "Minji Kang - mk2322 and Ziqiao Shan - zs352"
+execute:
+  warning: false
+format:
+  html:
+    embed-resources: true
+---
+
+```{r}
+# install readxl package to read excel file, if needed
+# install.packages("readxl")
+
+library(readxl)
+
+library(tidyverse)
+
+library(ggplot2)
+
+```
+
+# 1st ggplot2 Graph (Bar Chart)
+
+## Brief Dataset Explanation:
+
+1st Graph uses data from a 2015-2023 dataset provided by the Korean Statistical Information Service (KOSIS), a government-run website that reports fertility rates for each province.
+
+```{r}
+# First ggplot2 Graph (Bar Chart)
+
+# We used abbreviation of provinces' names, instead of full name. The reason is 
+#that the province's names are long.(We added the abbreviation list below the 
+#1st Graph output)
+
+# Importing Korean Birth Rate (By Province) Dataset
+
+birthrate <-
+  read_xlsx("data/birthrate.xlsx") 
+
+birthrate <- birthrate |>
+  pivot_longer(
+    cols = starts_with("20"),
+    names_to = "year",
+    values_to = "birthrate"
+  )
+
+# Making a Bar Chart
+
+ggplot(
+  birthrate, 
+  mapping = aes(x = Province, y = birthrate, fill = year, alpha = birthrate)) +
+  facet_wrap(~ year) +
+  coord_flip() + 
+  geom_col(width = 0.5) +
+  scale_alpha_continuous(range = c(0.4, 1)) +  
+  labs(title = "Annual Birth Rate by Province in South Korea (2015 - 2023)",
+       subtitle = "Urbanized areas show lower fertility rates; however,\nSejong (SJG), a newly established city,\nexhibits an exceptionally high rate.", 
+       x = "Province",
+       y = "Birthrate (%)",
+       caption = 
+         "Data Source: Korean Statistical Information Service (KOSIS)") +
+  theme(
+    plot.title = element_text(size = 15),
+    plot.subtitle = element_text(size = 8, color = "Dark Blue"),
+    legend.title = element_text(size = 13),
+    axis.text.x = element_text(size = 5),
+    axis.text.y = element_text(size = 4))
+```
+## Abbreviations for Each Provinces:
+1. Whole country → (Total) Tot.
+2. Seoul →	SEO
+3. Busan →	BUS
+4. Daegu →	DAE
+5. Incheon →	INC
+6. Gwangju →	GWJ
+7. Daejeon →	DJN
+8. Ulsan →	ULS
+9. Sejong-si →	SJG
+10. Gyeonggi-do →	GGD
+11. Gangwon-do →	GWD
+12. Chungcheongbuk-do →	CCB
+13. Chungcheongnam-do →	CCN
+14. Jeollabuk-do →	JLB
+15. Jeollanam-do →	JLN
+16. Gyeongsangbuk-do →	GSB
+17. Gyeongsangnam-do →	GSN
+18. Jeju →	JEJ
+
+# 2nd ggplot2 Graph (Scatterplot)
+
+## Brief Dataset Explanation:
+
+The data used in Graph 2 come from datasets spanning 2015 to 2023 that reflect provincial fertility rates and housing prices, sourced from KOSIS.
+
+
+```{r}
+# Second ggplot2 Graph (Scatterplot)
+
+# Importing Korean Housing Price (By Province) Dataset
+
+housingprice <-
+  read_xlsx("data/housingprice.xlsx") 
+
+housingprice <- housingprice |>
+  pivot_longer(
+    cols = starts_with("20"),
+    names_to = "year",
+    values_to = "housingprice"
+  )
+
+housingprice <- housingprice |>
+  mutate(housingprice = as.numeric(housingprice))
+
+# We merged two different datasets into one dataset
+
+scatterplotdata <- full_join(birthrate, housingprice)
+
+scatterplotdata <- scatterplotdata |>
+  filter(Province %in% c("SEO"))
+
+# Making a Scatterplot
+
+ggplot(scatterplotdata, aes(x = housingprice, y = birthrate)) +
+  geom_point(alpha = 0.5, color = "red") +
+  geom_smooth(method = "lm", color = "orange") +
+  labs(
+    title = "Housing Prices vs. Birth Rates in Seoul (2015 - 2023)",
+    subtitle = "A closer look at Seoul—despite having the lowest fertility rate—\nreveals that higher housing prices correspond with lower birth rates.", 
+    y = "Birthrate (%)", 
+    caption = "Data Source: Korean Statistical Information Service (KOSIS)") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 15),
+    plot.subtitle = element_text(size = 8, color = "Dark Blue"),
+    axis.text.x = element_text(size = 5),
+    axis.text.y = element_text(size = 4))
+
+```
+
+## Indicator Definition and Interpretation:
+KOSIS mentions that indicators "refers to a value calculated by using the price ratio between the base period and the survey period conducted every period, converted into a figure where the base period is set to 100."
+
+# 3rd ggplot2 Graph (Histogram)
+
+## Brief Dataset Explanation:
+
+The data used in Graph 3 come from datasets spanning 2015 to 2023 that capture monthly working hours across various age groups, sourced from KOSIS
+
+```{r}
+# Third ggplot2 Graph (Histogram)
+
+# Importing Korean Working Hours Dataset (By Age Group)
+
+workhour <- read_xlsx("data/workhour.xlsx")
+
+workhour <- workhour |>
+  pivot_longer(
+    cols = starts_with("20"),
+    names_to = "year",
+    values_to = "workhour"
+  )
+
+# Making a Histogram
+
+ggplot(workhour, 
+       mapping = aes(x = workhour, fill = Agegroup, colour = Agegroup)) +
+  geom_histogram(binwidth = 0.5) +
+  labs(title = "Monthly Working Hours by Age Groups (2015 - 2023)",
+       subtitle = "In 2023, the average working hours was 157.6 hours.\nThe analysis reveals that the '30-49' age group has the longest working hours, which are above the average level.",
+       x = "Monthly Working Hours",
+       y = "Frequency of Age Group",
+       caption = "Data Source: Korean Statistical Information Service (KOSIS)") +
+  theme(
+    plot.title = element_text(size = 15),
+    plot.subtitle = element_text(size = 8, color = "Dark Blue"),
+    legend.title = element_text(size = 13),
+    axis.text.x = element_text(size = 5),
+    axis.text.y = element_text(size = 4))
+
+```
+
+# 4th ggplot2 Graph (Line Plot)
+
+## Breif Dataset Explanation:
+
+The data used in 4th Graph come from a dataset spanning 2016 to 2023 that reflects Seoul's annual household expenditures on private education, sourced from KOSIS.
+
+```{r}
+# Fourth ggplot2 Graph (Lineplot)
+
+# Importing Seoul's Annual Household Expenditures on Private Education Dataset
+
+seoul_edu <- 
+  read_excel("data/seoul_edu.xlsx")
+
+# Due to missing data in year 2015, we use data from 2016 to 2023 in this part.
+
+# Making a Lineplot
+
+ggplot(seoul_edu, aes(x = Year, y = Expenditures)) +
+  geom_line(color = "red", size = 1) +
+  geom_point(color = "orange", size = 2) +
+  scale_x_continuous(breaks = 2016:2023) +
+  labs(
+    title = "Private Education Expenditures in Seoul (2016-2023)",
+    subtitle = "From 2016 to 2019, annual household expenditures on private education\n
+in Seoul increased steadily. In 2020, there was a slight dip, which may\n
+have been influenced by the COVID-19 pandemic. However, from 2020\n
+through 2023, expenditures increased sharply.",
+    x = "Year",
+    y = "Private Education Expenditure (billion Won)",
+    caption = "Data Source: Korean Statistical Information Service (KOSIS)"
+  ) +
+   theme_minimal()
+```
+
+## 1st Graph Output Explanation:
+
+Even in South Korea, where low birth rates are a serious concern, regional disparities in fertility rates are widening, primarily due to differences in infrastructure. Sejong—the region with the highest birth rate in our graph—was established in 2012 when the central government relocated there. The city's advanced infrastructure and concentration of residents with stable employment may be key factors driving its high birth rate. While birth rates are influenced by a variety of factors such as jobs, housing, and education, Sejong seems to effectively integrate all three. In contrast, although Seoul offers abundant employment opportunities, its high housing prices contribute to its lower birth rate.
+
+## 2nd Graph Output Explanation:
+
+From the scatter plot, we observe a strong negative correlation between housing prices and birth rate in Seoul. The fitted regression line slopes downward, indicating that higher housing prices are associated with lower birth rates. One possible interpretation is that as housing costs increase, financial constraints or concerns about affordability may lead some families to delay or reduce childbearing. However, it is important to note that correlation does not imply causation. Other factors could also influence birth rates.
+
+## 3rd Graph Output Explanation:
+
+The histogram displays the distribution of monthly working hours for different age groups from 2015-2023. KOSIS data reveals that the overall average working hours for 2023 is 157.6 hours. The histogram reveals that individuals aged 30 to 49 work significantly longer than the average level. This extended work duration indicates that middle-aged individuals are dedicating more time to their careers compared to other age groups. Such prolonged working hours may contribute to delayed family planning, which in turn could be a factor in Seoul's low fertility rate.
+
+## 4th Graph Output Explanation:
+
+Because of the missing data in 2015, we use Seoul's Annual Household Expenditures on Private Education from 2016 to 2023. The fourth Graph shows a generally upward trend in these expenditures over this period. Despite some fluctuations in 2020—likely influenced by the COVID-19 outbreak. By 2023, expenditures are noticeably higher than in 2016, which suggest that households are investing more in private education over time. Importantly, this rising trend may help explain Seoul's low fertility rate, as higher private education costs can place additional financial burdens on families, potentially discouraging them from having more children. Thus, private education expenditures can be an important factor influencing Seoul's birth rate.  
+
+## Conclusion
+
+In summary, our analysis demonstrates that Seoul's low fertility rate is shaped by a complex interplay of socio-economic factors related to housing, employment, and education. The visualizations reveal that while regions like Sejong benefit from integrated infrastructure and stable employment, Seoul's high housing prices are closely linked to reduced fertility rates. The negative correlation between housing prices and birth rates, combined with the extended working hours observed in the 30-49 age group and the steadily rising private education expenditures, underscores the multifaceted pressures faced by Seoul's families. These findings suggest that single-factor interventions, such as baby bonuses, are unlikely to be sufficient; instead, comprehensive cross-sector reforms are needed. Potential policy measures include stabilizing housing markets through increased supply and price controls, implementing progressive labor policies (e.g., mandatory parental leave and flexible working hours), and enhancing public education to reduce the reliance on expensive private tutoring, with additional crisis-responsive social safety nets to mitigate economic shocks.
+
+# References
+
+1. Birth rate (By Province in South Korea)
+
+*Hyperlink: https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1B81A21&conn_path=I2&language=en
+
+*(2023, 2025.03.03, Total Fertility Rates and Age-Specific Fertility Rates for Provinces)
+
+2. Housing Price
+
+*Hyperlink: https://kosis.kr/visual/economyBoard/economyJipyo.do?listId=126&unitySrvcId=213&lang=en
+
+*(Regional Comparison by Indicator Housing purchase price indices)
+
+*Comments: We used housing purchase price indices from 2015 to 2023 across different regions of South Korea. From this dataset, we specifically focused on Seoul for detailed analysis. For each year, we selected the index value from December as the reference point to represent the housing purchase price for that year.
+
+3. Monthly Working Hours of Wage Workers (By Age Group)
+
+*Hyperlink: https://www.index.go.kr/unify/idx-info.do?idxCd=8064
+
+4. Seoul's Annually Private Education Expenditures
+
+*Hyperlink: https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1PE003&conn_path=I2&language=en
+
+
+
